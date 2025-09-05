@@ -6,7 +6,7 @@
 #    By: yseguin <yseguin@student.42perpignan.fr    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/09/01 15:53:49 by ilbonnev          #+#    #+#              #
-#    Updated: 2025/09/04 14:41:54 by yseguin          ###   ########.fr        #
+#    Updated: 2025/09/05 12:07:24 by yseguin          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,7 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -Iincludes
 
 OBJ_DIR = obj
 
-SRC = src/main.cpp src/Launcher/Launcher.cpp
+SRC = src/main.cpp src/Server/Server.cpp
 OBJ = $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(SRC))
 all: $(NAME)
 $(NAME): $(OBJ)
