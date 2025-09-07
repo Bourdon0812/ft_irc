@@ -5,8 +5,10 @@
 
 // class used to parse the input buffer
 class Parser {
+
+// je l'ai mis en place histoire de commencer
 public:
-	static void parse(std::string inBuf);
+	static Command parse(std::string inBuf);
 };
 
 #endif

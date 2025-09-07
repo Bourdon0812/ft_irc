@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <map>
 #include <vector>
+#include <set>
 #include <stdexcept>
 #include <sys/socket.h>
 #include <netinet/in.h>
