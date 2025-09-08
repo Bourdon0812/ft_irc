@@ -9,6 +9,7 @@ class Server;
 class Executer {
 private:
 	static bool _requireRegistered(User &user, const std::string &cmdName);
+
 	static void _executePass(Command& command, User &user, Server &server);
 	static void _executeNick(Command& command, User &user, Server &server);
 	static void _executeUser(Command& command, User &user);
@@ -21,6 +22,8 @@ private:
 	static void _executePing(Command& command, User &user);
 	static void _executePong(Command& command, User &user);
 	static void _executeUnknown(Command& command, User &user);
+
+	static void _checkIfLog(User &user);
 public:
 	static void execute(Command& command, User &user, Server &server);
 };

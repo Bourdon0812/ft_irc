@@ -2,7 +2,7 @@
 #include <cctype>
 
 bool Executer::_requireRegistered(User &user, const std::string &cmdName) {
-	if (user.registered) return true;
+	if (user.nickOk && user.userOk) return true;
 	std::string nick = user.nick.empty() ? "*" : user.nick;
 	user.outBuf += Server::serverMessage(ERR_NOTREGISTERED, nick, cmdName, "You must be fully connected to use this command.");
 	return false;
@@ -72,10 +72,10 @@ void Executer::_executePass(Command& command, User &user, Server &server) {
 void Executer::_executeNick(Command& command, User &user, Server &server) {
 	std::cout << "Executing NICK command" << std::endl;
 	if (!user.passOK) {
-		user.outBuf += Server::serverMessage(ERR_PASSWDMISMATCH, user.nick, "NICK", "Password incorrect");
+		user.outBuf += Server::serverMessage(ERR_NOTREGISTERED, user.nick, "NICK", "You must be fully connected to use this command.");
 		return ;
 	}
-	if (command.args.size() != 1) {
+	if (command.args.size() < 1) {
 		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "NICK", "Not enough parameters");
 		return;
 	}
@@ -98,12 +98,27 @@ void Executer::_executeNick(Command& command, User &user, Server &server) {
 		}
 	}
 	user.nick = newNick;
+	user.nickOk = true;
+	_checkIfLog(user);
 }
 
 void Executer::_executeUser(Command& command, User &user) {
-	(void)command;
-	(void)user;
 	std::cout << "Executing USER command" << std::endl;
+	if (!user.passOK) {
+		user.outBuf += Server::serverMessage(ERR_NOTREGISTERED, user.nick, "USER", "You must be fully connected to use this command.");
+		return ;
+	}
+	if (user.nickOk && user.userOk) {
+		user.outBuf += Server::serverMessage(ERR_ALREADYREGISTRED, user.nick.empty() ? "*" : user.nick, "USER", "You may not reregister");
+	}
+	if (command.args.size() != 4) {
+		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "USER", "Not enough parameters");
+		return;
+	}
+	user.username = command.args[0];
+	user.realname = command.args[3];
+	user.userOk = true;
+	_checkIfLog(user);
 }
 
 void Executer::_executeJoin(Command& command, User &user) {
@@ -180,4 +195,11 @@ void Executer::_executeUnknown(Command& command, User &user) {
 	reply = Server::serverMessage(ERR_UNKNOWNCOMMAND, nick, commandNameFromInput, "Unknown command");
 	
 	user.outBuf += reply;
+}
+
+void Executer::_checkIfLog(User &user) {
+	if (user.passOK && user.nickOk && user.userOk && !user.welcome) {
+		user.outBuf = Server::serverMessage(RPL_WELCOME, user.nick, "", "Your host is irc.42.fr, running version 1.0");
+		user.welcome = true;
+	}
 }

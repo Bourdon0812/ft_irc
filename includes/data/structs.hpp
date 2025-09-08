@@ -3,10 +3,13 @@
 
 #include "irc.hpp"
 
+
 // struct used for the a client (user)
 struct User {
     bool passOK;
-    bool registered;
+    bool nickOk;
+	bool userOk;
+	bool welcome;
     bool quit;
 
     std::string nick;
@@ -19,7 +22,7 @@ struct User {
 
     std::set<std::string> channels;
 
-    User() : passOK(false), registered(false), quit(false), channels() {}
+    User() : passOK(false), nickOk(false), userOk(false), quit(false), channels() {}
 };
 
 // enum used to identify the type of command
