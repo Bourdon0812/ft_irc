@@ -18,6 +18,7 @@
 #include <cctype>
 #include <cerrno>
 #include "data/structs.hpp"
+#include "data/replies.hpp"
 
 #include "components/Server.hpp"
 #include "components/Executer.hpp"

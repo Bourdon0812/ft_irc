@@ -211,6 +211,10 @@ std::string Server::serverMessage(int code, std::string nick, std::string comman
 	return msg;
 }
 
-std::string Server::getPassword() {
+std::string Server::getPassword() const {
 	return this->_password;
+}
+
+std::map<int, User> Server::getUsers() const {
+	return this->_users;
 }

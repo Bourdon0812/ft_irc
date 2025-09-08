@@ -1,9 +1,10 @@
 #include "components/Executer.hpp"
+#include <cctype>
 
 bool Executer::_requireRegistered(User &user, const std::string &cmdName) {
 	if (user.registered) return true;
 	std::string nick = user.nick.empty() ? "*" : user.nick;
-	user.outBuf += Server::serverMessage(451, nick, cmdName, "You must be fully connected to use this command.");
+	user.outBuf += Server::serverMessage(ERR_NOTREGISTERED, nick, cmdName, "You must be fully connected to use this command.");
 	return false;
 }
 
@@ -15,7 +16,7 @@ void Executer::execute(Command& command, User &user, Server &server) {
 			_executePass(command, user, server);
 			break;
 		case NICK:
-			_executeNick(command, user);
+			_executeNick(command, user, server);
 			break;
 		case USER:
 			_executeUser(command, user);
@@ -56,18 +57,47 @@ void Executer::execute(Command& command, User &user, Server &server) {
 
 void Executer::_executePass(Command& command, User &user, Server &server) {
 	std::cout << "Executing PASS command" << std::endl;
+	if (user.passOK) {
+		user.outBuf += Server::serverMessage(ERR_ALREADYREGISTRED, user.nick, "PASS", "You are already registered");
+		return;
+	}
 	if (command.args.size() == 1 && command.args[0] == server.getPassword()) {
 		user.passOK = true;
-		user.outBuf += Server::serverMessage(381, user.nick, "PASS", "You are now registered");
+		user.outBuf += Server::serverMessage(RPL_YOUREOPER, user.nick, "PASS", "You are now registered");
 	} else {
-		user.outBuf += Server::serverMessage(464, user.nick, "PASS", "Password incorrect");
+		user.outBuf += Server::serverMessage(ERR_PASSWDMISMATCH, user.nick, "PASS", "Password incorrect");
 	}
 }
 
-void Executer::_executeNick(Command& command, User &user) {
-	(void)command;
-	(void)user;
+void Executer::_executeNick(Command& command, User &user, Server &server) {
 	std::cout << "Executing NICK command" << std::endl;
+	if (!user.passOK) {
+		user.outBuf += Server::serverMessage(ERR_PASSWDMISMATCH, user.nick, "NICK", "Password incorrect");
+		return ;
+	}
+	if (command.args.size() != 1) {
+		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "NICK", "Not enough parameters");
+		return;
+	}
+	const std::string &newNick = command.args[0];
+	if (newNick.empty() || !std::isalpha(static_cast<unsigned char>(newNick[0]))) {
+		user.outBuf += Server::serverMessage(ERR_ERRONEUSNICKNAME, user.nick, "NICK", "Nickname is invalid");
+		return;
+	}
+	for (size_t i = 0; i < newNick.size(); ++i) {
+		if (!std::isalnum(static_cast<unsigned char>(newNick[i]))) {
+			user.outBuf += Server::serverMessage(ERR_ERRONEUSNICKNAME, user.nick, "NICK", "Nickname is invalid");
+			return;
+		}
+	}
+	std::map<int, User> temp = server.getUsers();
+	for (std::map<int, User>::iterator it = temp.begin(); it != temp.end(); it++) {
+		if (it->second.nick == newNick) {
+			user.outBuf += Server::serverMessage(ERR_NICKNAMEINUSE, user.nick, "NICK", "Nickname is already in use");
+			return ;
+		}
+	}
+	user.nick = newNick;
 }
 
 void Executer::_executeUser(Command& command, User &user) {
@@ -143,12 +173,11 @@ void Executer::_executeUnknown(Command& command, User &user) {
 		size_t last = commandNameFromInput.find_last_not_of(" \t\n\r");
 		commandNameFromInput = commandNameFromInput.substr(first, (last - first + 1));
 	}
-
 	if (commandNameFromInput.empty()) {
 		commandNameFromInput = "UNKNOWN_COMMAND";
 	}
 
-	reply = Server::serverMessage(421, nick, commandNameFromInput, "Unknown command");
+	reply = Server::serverMessage(ERR_UNKNOWNCOMMAND, nick, commandNameFromInput, "Unknown command");
 	
 	user.outBuf += reply;
 }
