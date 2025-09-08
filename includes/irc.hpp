@@ -14,9 +14,14 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sstream>
+#include <cctype>
+#include <cerrno>
 #include "data/structs.hpp"
 
 #include "components/Server.hpp"
+#include "components/Executer.hpp"
 #include "components/Parser.hpp"
+#include "components/Tools.hpp"
 
 #endif

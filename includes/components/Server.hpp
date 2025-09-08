@@ -19,10 +19,16 @@ private:
 	void _onClientDisconnected(int fd);
 	void _onServerReadable();
 	void _onClientReadable(int fd);
+	void _onClientWritable(int fd);
 public:
 	Server(int port, std::string password);
 	~Server();
+
 	void run();
+
+	static std::string serverHostname;
+	static std::string serverMessage(int code, std::string nick, std::string commandNameFromInput, std::string message);
+	std::string getPassword();
 };
 
 #endif

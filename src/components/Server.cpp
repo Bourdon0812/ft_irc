@@ -70,16 +70,21 @@ void Server::_setNonBlocking(int fd) {
 void Server::_eventLoop() {
 	while (true) {
 		fd_set readfds;
+		fd_set writefds;
 		FD_ZERO(&readfds);
+		FD_ZERO(&writefds);
 		FD_SET(this->_serverFd, &readfds);
 		int maxFd = this->_serverFd;
 		for (std::map<int, User>::iterator it = this->_users.begin(); it != this->_users.end(); it++) {
 			FD_SET(it->first, &readfds);
+			if (!it->second.outBuf.empty()) {
+				FD_SET(it->first, &writefds);
+			}
 			if (it->first > maxFd) {
 				maxFd = it->first;
 			}
 		}
-		int activity = select(maxFd + 1, &readfds, NULL, NULL, NULL);
+		int activity = select(maxFd + 1, &readfds, &writefds, NULL, NULL);
 		if (activity == -1) {
 			throw std::runtime_error("select() failed");
 		}
@@ -87,14 +92,24 @@ void Server::_eventLoop() {
 			this->_onServerReadable();
 		}
 
-		std::vector<int> fdsToProcess;
+		std::vector<int> fdsToRead;
 		for (std::map<int, User>::iterator it = this->_users.begin(); it != this->_users.end(); it++) {
 			if (FD_ISSET(it->first, &readfds)) {
-				fdsToProcess.push_back(it->first);
+				fdsToRead.push_back(it->first);
 			}
 		}
-		for (std::vector<int>::iterator it = fdsToProcess.begin(); it != fdsToProcess.end(); it++) {
+		for (std::vector<int>::iterator it = fdsToRead.begin(); it != fdsToRead.end(); it++) {
 			this->_onClientReadable(*it);
+		}
+
+		std::vector<int> fdsToWrite;
+		for (std::map<int, User>::iterator it = this->_users.begin(); it != this->_users.end(); it++) {
+			if (FD_ISSET(it->first, &writefds)) {
+				fdsToWrite.push_back(it->first);
+			}
+		}
+		for (std::vector<int>::iterator it = fdsToWrite.begin(); it != fdsToWrite.end(); it++) {
+			this->_onClientWritable(*it);
 		}
 	}
 }
@@ -151,17 +166,34 @@ void Server::_onClientReadable(int fd) {
 			this->_onClientDisconnected(fd);
 			return;
 		} else {
-			if (errno == EAGAIN || errno == EWOULDBLOCK) break ;
+			if (errno == EAGAIN || errno == EWOULDBLOCK) break;
 			this->_onClientDisconnected(fd);
 			return;
 		}
 	}
 	std::string line;
 	while (this->_createLine(u.inBuf, line)) {
-		Parser::parse(line);
+		Command command = Parser::parse(line);
+		Executer::execute(command, u, *this);
 	}
 }
 
+void Server::_onClientWritable(int fd) {
+	std::map<int, User>::iterator it = this->_users.find(fd);
+    if (it == this->_users.end()) return;
+    User &u = it->second;
+	if (u.outBuf.empty()) return;
+	ssize_t n = send(fd, u.outBuf.data(), u.outBuf.size(), 0);
+	if (n > 0) {
+		u.outBuf.erase(0, static_cast<size_t>(n));
+		return;
+	}
+	if (n == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+		return;
+	}
+	this->_onClientDisconnected(fd);
+}
+	
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Server::run() {
@@ -170,4 +202,15 @@ void Server::run() {
 	this->_ignoreSigpipe();
 	this->_setNonBlocking(this->_serverFd);
 	this->_eventLoop();
+}
+
+std::string Server::serverHostname = "irc.42.fr";
+
+std::string Server::serverMessage(int code, std::string nick, std::string commandNameFromInput, std::string message) {
+	std::string msg = ":" + Server::serverHostname + " " + Tools::intToString(code) + " " + nick + " " + commandNameFromInput + " :" + message + "\r\n";
+	return msg;
+}
+
+std::string Server::getPassword() {
+	return this->_password;
 }
