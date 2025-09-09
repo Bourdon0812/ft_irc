@@ -8,6 +8,13 @@ bool Executer::_requireRegistered(User &user, const std::string &cmdName) {
 	return false;
 }
 
+void Executer::_checkIfLog(User &user) {
+	if (user.passOK && user.nickOk && user.userOk && !user.welcome) {
+		user.outBuf = Server::serverMessage(RPL_WELCOME, user.nick, "", "Your host is irc.42.fr, running version 1.0");
+		user.welcome = true;
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Executer::execute(Command& command, User &user, Server &server) {
@@ -121,6 +128,8 @@ void Executer::_executeUser(Command& command, User &user) {
 	_checkIfLog(user);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void Executer::_executeJoin(Command& command, User &user) {
 	if (!_requireRegistered(user, "JOIN")) return;
 	(void)command;
@@ -157,17 +166,28 @@ void Executer::_executeMode(Command& command, User &user) {
 	std::cout << "Executing MODE command" << std::endl;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void Executer::_executePing(Command& command, User &user) {
-	(void)command;
-	(void)user;
 	std::cout << "Executing PING command" << std::endl;
+	if (command.args.size() < 1) {
+		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "PING", "Not enough parameters");
+		return;
+	}
+	user.outBuf += "PONG :" + command.args[0] + "\r\n";
+	user.lastActivityMs = Tools::nowMs();
 }
 
 void Executer::_executePong(Command& command, User &user) {
-	(void)command;
-	(void)user;
 	std::cout << "Executing PONG command" << std::endl;
+	if (command.args.size() < 1) {
+		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "PONG", "Not enough parameters");
+		return;
+	}
+	user.lastActivityMs = Tools::nowMs();
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Executer::_executeUnknown(Command& command, User &user) {
 	std::string reply;
@@ -195,11 +215,4 @@ void Executer::_executeUnknown(Command& command, User &user) {
 	reply = Server::serverMessage(ERR_UNKNOWNCOMMAND, nick, commandNameFromInput, "Unknown command");
 	
 	user.outBuf += reply;
-}
-
-void Executer::_checkIfLog(User &user) {
-	if (user.passOK && user.nickOk && user.userOk && !user.welcome) {
-		user.outBuf = Server::serverMessage(RPL_WELCOME, user.nick, "", "Your host is irc.42.fr, running version 1.0");
-		user.welcome = true;
-	}
 }
