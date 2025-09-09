@@ -11,7 +11,10 @@ struct User {
 	bool userOk;
 	bool welcome;
     bool quit;
+	bool pingSent;
 
+	unsigned long lastActivityMs;
+	unsigned long pingSentMs;
     std::string nick;
     std::string username;
     std::string realname;

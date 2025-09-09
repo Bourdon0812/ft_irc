@@ -149,6 +149,7 @@ void Server::_onServerReadable() {
 	}
 	this->_setNonBlocking(newFd);
 	this->_users[newFd] = User();
+	this->_users[newFd].lastActivityMs = Tools::nowMs();
 	std::cout << "New client connected (fd=" << newFd << ")" << std::endl;
 }
 
@@ -162,6 +163,7 @@ void Server::_onClientReadable(int fd) {
 		ssize_t n = recv(fd, buf, sizeof(buf), 0);
 		if (n > 0) {
 			u.inBuf.append(buf, n);
+			u.lastActivityMs = Tools::nowMs();
 		} else if (n == 0) {
 			this->_onClientDisconnected(fd);
 			return;

@@ -8,6 +8,7 @@ public:
 	static std::string toUpper(std::string s);
 	static CommandType cmdFromString(const std::string &name);
 	static std::string intToString(int n);
+	static unsigned long nowMs();
 };
 
 #endif

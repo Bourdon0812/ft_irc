@@ -23,9 +23,13 @@ CommandType Tools::cmdFromString(const std::string &name) {
 	return UNKNOWN;
 }
 
-
 std::string Tools::intToString(int n) {
 	std::stringstream ss;
 	ss << n;
 	return ss.str();
 }
+
+unsigned long Tools::nowMs() {
+	timeval tv; gettimeofday(&tv, 0);
+	return (unsigned long)(tv.tv_sec) * 1000ul + (unsigned long)(tv.tv_usec) / 1000ul;
+  }
