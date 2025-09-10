@@ -67,8 +67,30 @@ void Server::_setNonBlocking(int fd) {
 	}
 }
 
+void Server::_pingAllUsers() {
+	long now = Tools::nowMs();
+	for (std::map<int, User>::iterator it = this->_users.begin(); it != this->_users.end(); ) {
+		User &u = it->second;
+		if (u.pingSentMs == 0)
+			u.pingSentMs = now;
+		if (!u.awaitingPong && now - u.pingSentMs > PING_TIMEOUTMS) {
+			u.outBuf += "PING :" + serverHostname + "\r\n";
+			u.pingSentMs = now;
+			u.awaitingPong = true;
+		}
+		if (u.awaitingPong && now - u.pingSentMs > PING_TIMEOUTMS) {
+			int fd = it->first;
+			++it;
+			this->_onClientDisconnected(fd);
+			continue;
+		}
+		++it;
+	}
+}
+
 void Server::_eventLoop() {
 	while (true) {
+		this->_pingAllUsers();
 		fd_set readfds;
 		fd_set writefds;
 		FD_ZERO(&readfds);
@@ -84,7 +106,10 @@ void Server::_eventLoop() {
 				maxFd = it->first;
 			}
 		}
-		int activity = select(maxFd + 1, &readfds, &writefds, NULL, NULL);
+		struct timeval tv;
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		int activity = select(maxFd + 1, &readfds, &writefds, NULL, &tv);
 		if (activity == -1) {
 			throw std::runtime_error("select() failed");
 		}
@@ -150,6 +175,7 @@ void Server::_onServerReadable() {
 	this->_setNonBlocking(newFd);
 	this->_users[newFd] = User();
 	this->_users[newFd].lastActivityMs = Tools::nowMs();
+	this->_users[newFd].pingSentMs = Tools::nowMs();
 	std::cout << "New client connected (fd=" << newFd << ")" << std::endl;
 }
 
@@ -209,7 +235,13 @@ void Server::run() {
 std::string Server::serverHostname = "irc.42.fr";
 
 std::string Server::serverMessage(int code, std::string nick, std::string commandNameFromInput, std::string message) {
-	std::string msg = ":" + Server::serverHostname + " " + Tools::intToString(code) + " " + nick + " " + commandNameFromInput + " :" + message + "\r\n";
+	std::string codeStr = Tools::intToString(code);
+	while (codeStr.size() < 3) codeStr.insert(codeStr.begin(), '0');
+	std::string msg = ":" + Server::serverHostname + " " + codeStr + " " + (nick.empty() ? "*" : nick);
+	if (!commandNameFromInput.empty()) {
+		msg += " " + commandNameFromInput;
+	}
+	msg += " :" + message + "\r\n";
 	return msg;
 }
 

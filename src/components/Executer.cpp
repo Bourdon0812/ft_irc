@@ -185,6 +185,8 @@ void Executer::_executePong(Command& command, User &user) {
 		return;
 	}
 	user.lastActivityMs = Tools::nowMs();
+	user.awaitingPong = false;
+	user.pingSentMs = user.lastActivityMs;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

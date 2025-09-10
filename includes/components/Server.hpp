@@ -14,6 +14,7 @@ private:
 	void _setSocket();
 	void _ignoreSigpipe();
 	void _setNonBlocking(int fd);
+	void _pingAllUsers();
 	void _eventLoop();
 	bool _createLine(std::string &inBuf, std::string &out);
 	void _onClientDisconnected(int fd);

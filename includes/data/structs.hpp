@@ -3,7 +3,6 @@
 
 #include "irc.hpp"
 
-
 // struct used for the a client (user)
 struct User {
     bool passOK;
@@ -11,7 +10,7 @@ struct User {
 	bool userOk;
 	bool welcome;
     bool quit;
-	bool pingSent;
+	bool awaitingPong;
 
 	unsigned long lastActivityMs;
 	unsigned long pingSentMs;
@@ -25,7 +24,7 @@ struct User {
 
     std::set<std::string> channels;
 
-    User() : passOK(false), nickOk(false), userOk(false), quit(false), channels() {}
+    User() : passOK(false), nickOk(false), userOk(false), welcome(false), quit(false), awaitingPong(false), lastActivityMs(0), pingSentMs(0), channels() {}
 };
 
 // enum used to identify the type of command
