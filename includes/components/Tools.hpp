@@ -1,7 +1,7 @@
 #ifndef TOOLS_HPP
-#define TOOLS_HPP
+# define TOOLS_HPP
 
-#include "irc.hpp"
+# include "irc.hpp"
 
 class Tools {
 public:

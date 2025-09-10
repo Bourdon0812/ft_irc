@@ -1,7 +1,7 @@
 #ifndef PARSER_HPP
-#define PARSER_HPP
+# define PARSER_HPP
 
-#include "irc.hpp"
+# include "irc.hpp"
 
 // class used to parse the input buffer
 class Parser {

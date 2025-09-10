@@ -1,28 +1,28 @@
 #ifndef IRC_HPP
-#define IRC_HPP
+# define IRC_HPP
 
-#include <iostream>
-#include <string>
-#include <cstdlib>
-#include <map>
-#include <vector>
-#include <set>
-#include <stdexcept>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sstream>
-#include <cctype>
-#include <cerrno>
-#include "data/structs.hpp"
-#include "data/replies.hpp"
+# include <iostream>
+# include <string>
+# include <cstdlib>
+# include <map>
+# include <vector>
+# include <set>
+# include <stdexcept>
+# include <sys/socket.h>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+# include <signal.h>
+# include <fcntl.h>
+# include <unistd.h>
+# include <sstream>
+# include <cctype>
+# include <cerrno>
+# include "data/structs.hpp"
+# include "data/replies.hpp"
 
-#include "components/Server.hpp"
-#include "components/Executer.hpp"
-#include "components/Parser.hpp"
-#include "components/Tools.hpp"
+# include "components/Server.hpp"
+# include "components/Executer.hpp"
+# include "components/Parser.hpp"
+# include "components/Tools.hpp"
 
 #endif

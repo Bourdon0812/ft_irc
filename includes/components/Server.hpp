@@ -1,7 +1,7 @@
 #ifndef Server_HPP
-#define Server_HPP
+# define Server_HPP
 
-#include "irc.hpp"
+# include "irc.hpp"
 
 // class used to create a server and manage clients
 class Server {

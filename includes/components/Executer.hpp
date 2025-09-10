@@ -1,7 +1,7 @@
 #ifndef EXECUTER_CPP
-#define EXECUTER_CPP
+# define EXECUTER_CPP
 
-#include "irc.hpp"
+# include "irc.hpp"
 
 class Server;
 
