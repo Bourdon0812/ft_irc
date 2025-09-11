@@ -14,7 +14,7 @@ private:
 	static void _executeNick(Command& command, User &user, Server &server);
 	static void _executeUser(Command& command, User &user);
 	static void _executeJoin(Command& command, User &user);
-	static void _executePrivmsg(Command& command, User &user);
+	static void _executePrivmsg(Command& command, User &user, Server &server);
 	static void _executeKick(Command& command, User &user);
 	static void _executeInvite(Command& command, User &user);
 	static void _executeTopic(Command& command, User &user);

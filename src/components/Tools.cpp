@@ -29,6 +29,15 @@ std::string Tools::intToString(int n) {
 	return ss.str();
 }
 
+User *Tools::findUserByNick(const std::string &nick, std::map<int, User> &users) {
+	for (std::map<int, User>::iterator it = users.begin(); it != users.end(); ++it) {
+		if (it->second.nick == nick) {
+			return &(it->second);
+		}
+	}
+	return NULL;
+}
+
 unsigned long Tools::nowMs() {
 	timeval tv; gettimeofday(&tv, 0);
 	return (unsigned long)(tv.tv_sec) * 1000ul + (unsigned long)(tv.tv_usec) / 1000ul;

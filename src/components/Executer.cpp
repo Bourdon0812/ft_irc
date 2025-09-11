@@ -32,7 +32,7 @@ void Executer::execute(Command& command, User &user, Server &server) {
 			_executeJoin(command, user);
 			break;
 		case PRIVMSG:
-			_executePrivmsg(command, user);
+			_executePrivmsg(command, user, server);
 			break;
 		case KICK:
 			_executeKick(command, user);
@@ -97,8 +97,8 @@ void Executer::_executeNick(Command& command, User &user, Server &server) {
 			return;
 		}
 	}
-	std::map<int, User> temp = server.getUsers();
-	for (std::map<int, User>::iterator it = temp.begin(); it != temp.end(); it++) {
+	std::map<int, User> &users = server.getUsers();
+	for (std::map<int, User>::iterator it = users.begin(); it != users.end(); it++) {
 		if (it->second.nick == newNick) {
 			user.outBuf += Server::serverMessage(ERR_NICKNAMEINUSE, user.nick, "NICK", "Nickname is already in use");
 			return ;
@@ -128,18 +128,33 @@ void Executer::_executeUser(Command& command, User &user) {
 	_checkIfLog(user);
 }
 
+void Executer::_executePrivmsg(Command& command, User &user, Server &server) {
+	if (!_requireRegistered(user, "PRIVMSG")) return;
+	std::cout << "Executing PRIVMSG command" << std::endl;
+	if (command.args.size() < 2) {
+		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "PRIVMSG", "Not enough parameters");
+		return;
+	}
+	if (command.args[0].empty() || command.args[1].empty()) {
+		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "PRIVMSG", "Not enough parameters");
+		return;
+	}
+	std::map<int, User> &users2 = server.getUsers();
+	User* targetUser = Tools::findUserByNick(command.args[0], users2);
+	if (targetUser == NULL) {
+		user.outBuf += Server::serverMessage(ERR_NOSUCHNICK, user.nick, "PRIVMSG", "No such nick/channel");
+		return;
+	}
+	targetUser->outBuf += ":" + user.nick + " PRIVMSG " + command.args[0] + " :" + command.args[1] + "\r\n";
+	user.lastActivityMs = Tools::nowMs();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Executer::_executeJoin(Command& command, User &user) {
 	if (!_requireRegistered(user, "JOIN")) return;
 	(void)command;
 	std::cout << "Executing JOIN command" << std::endl;
-}
-
-void Executer::_executePrivmsg(Command& command, User &user) {
-	if (!_requireRegistered(user, "PRIVMSG")) return;
-	(void)command;
-	std::cout << "Executing PRIVMSG command" << std::endl;
 }
 
 void Executer::_executeKick(Command& command, User &user) {

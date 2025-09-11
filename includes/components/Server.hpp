@@ -30,7 +30,7 @@ public:
 	static std::string serverHostname;
 	static std::string serverMessage(int code, std::string nick, std::string commandNameFromInput, std::string message);
 	std::string getPassword() const;
-	std::map<int, User> getUsers() const;
+	std::map<int, User>& getUsers();
 };
 
 #endif

@@ -249,6 +249,6 @@ std::string Server::getPassword() const {
 	return this->_password;
 }
 
-std::map<int, User> Server::getUsers() const {
+std::map<int, User>& Server::getUsers() {
 	return this->_users;
 }
