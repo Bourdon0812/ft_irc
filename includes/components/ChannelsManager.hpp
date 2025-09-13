@@ -17,6 +17,7 @@ public:
 	void addUserToChannel(const std::string &channelName, User *user);
 	void removeUserFromChannel(const std::string &channelName, User *user);
 
+	// Permission management
 	bool isOperator(const std::string &channelName, User *user);
 	bool isVoiced(const std::string &channelName, User *user);
 	void addOperator(const std::string &channelName, User *user);
