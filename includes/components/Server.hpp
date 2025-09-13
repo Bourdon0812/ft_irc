@@ -10,7 +10,8 @@ private:
 	std::string _password;
 	int _serverFd;
 	std::map<int, User> _users;
-
+	ChannelsManager _channelsManager;
+	
 	void _setSocket();
 	void _ignoreSigpipe();
 	void _setNonBlocking(int fd);
@@ -31,6 +32,7 @@ public:
 	static std::string serverMessage(int code, std::string nick, std::string commandNameFromInput, std::string message);
 	std::string getPassword() const;
 	std::map<int, User>& getUsers();
+	ChannelsManager& getChannelsManager();
 };
 
 #endif

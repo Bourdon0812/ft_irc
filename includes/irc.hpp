@@ -21,7 +21,7 @@
 #include "data/structs.hpp"
 #include "data/replies.hpp"
 
-#include "components/Server.hpp"
+#include "components/ChannelsManager.hpp"
 #include "components/Executer.hpp"
 #include "components/Parser.hpp"
 #include "components/Tools.hpp"

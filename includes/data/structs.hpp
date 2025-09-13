@@ -21,10 +21,22 @@ struct User {
 
     std::string inBuf;
     std::string outBuf;
+    User() : passOK(false), nickOk(false), userOk(false), welcome(false), quit(false), awaitingPong(false), lastActivityMs(0), pingSentMs(0) {}
+};
 
-    std::set<std::string> channels;
-
-    User() : passOK(false), nickOk(false), userOk(false), welcome(false), quit(false), awaitingPong(false), lastActivityMs(0), pingSentMs(0), channels() {}
+// struct used for a channel
+struct Channel {
+    std::string name;
+    std::string topic;
+    std::string password;
+    std::string modes;
+    std::vector<User*> users;
+    std::vector<User*> operators;
+    std::vector<User*> voiced;
+    std::set<std::string> invited;
+    std::set<std::string> banned;
+    int userLimit;
+    Channel() : name(), topic(), password(), modes(), users(), operators(), voiced(), invited(), banned(), userLimit(0) {}
 };
 
 // enum used to identify the type of command

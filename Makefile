@@ -16,7 +16,7 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -Iincludes
 
 OBJ_DIR = obj
 
-SRC = src/main.cpp src/components/Server.cpp src/components/Parser.cpp src/components/Executer.cpp src/components/Tools.cpp
+SRC = src/main.cpp src/components/Server.cpp src/components/Parser.cpp src/components/Executer.cpp src/components/Tools.cpp src/components/ChannelsManager.cpp
 OBJ = $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(SRC))
 all: $(NAME)
 $(NAME): $(OBJ)

@@ -252,3 +252,7 @@ std::string Server::getPassword() const {
 std::map<int, User>& Server::getUsers() {
 	return this->_users;
 }
+
+ChannelsManager& Server::getChannelsManager() {
+	return this->_channelsManager;
+}

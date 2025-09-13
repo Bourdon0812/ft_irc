@@ -1,4 +1,5 @@
 #include "components/Executer.hpp"
+#include "components/Server.hpp"
 #include <cctype>
 
 bool Executer::_requireRegistered(User &user, const std::string &cmdName) {
@@ -29,7 +30,7 @@ void Executer::execute(Command& command, User &user, Server &server) {
 			_executeUser(command, user);
 			break;
 		case JOIN:
-			_executeJoin(command, user);
+			_executeJoin(command, user, server);
 			break;
 		case PRIVMSG:
 			_executePrivmsg(command, user, server);
@@ -151,10 +152,34 @@ void Executer::_executePrivmsg(Command& command, User &user, Server &server) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Executer::_executeJoin(Command& command, User &user) {
+void Executer::_executeJoin(Command& command, User &user, Server &server) {
+	std::string password = "";
 	if (!_requireRegistered(user, "JOIN")) return;
-	(void)command;
 	std::cout << "Executing JOIN command" << std::endl;
+	if (command.args.size() < 1) {
+		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "JOIN", "Not enough parameters");
+		return;
+	}
+	const std::string &channelName = command.args[0];
+	if (channelName.empty() || channelName[0] != '#') {
+		user.outBuf += Server::serverMessage(ERR_NOSUCHCHANNEL, user.nick, "JOIN", "No such channel");
+		return;
+	}
+	if (command.args.size() > 1) {
+		password = command.args[1];
+		if (password.empty()) {
+			user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "JOIN", "Not enough parameters");
+			return;
+		}
+	}
+	ChannelsManager channelManager = server.getChannelsManager();
+	Channel* channel = channelManager.getChannel(channelName);
+	if (channel == NULL) {
+		channelManager.addChannel(channelName, password);
+		channel = channelManager.getChannel(channelName);
+	}
+	channelManager.addUserToChannel(channelName, &user);
+
 }
 
 void Executer::_executeKick(Command& command, User &user) {
