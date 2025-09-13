@@ -140,13 +140,38 @@ void Executer::_executePrivmsg(Command& command, User &user, Server &server) {
 		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "PRIVMSG", "Not enough parameters");
 		return;
 	}
-	std::map<int, User> &users2 = server.getUsers();
-	User* targetUser = Tools::findUserByNick(command.args[0], users2);
-	if (targetUser == NULL) {
-		user.outBuf += Server::serverMessage(ERR_NOSUCHNICK, user.nick, "PRIVMSG", "No such nick/channel");
-		return;
+	const std::string &target = command.args[0];
+	const std::string &message = command.args[1];
+	if (target[0] == '#') {
+		ChannelsManager& channelManager = server.getChannelsManager();
+		Channel* channel = channelManager.getChannel(target);
+		
+		if (channel == NULL) {
+			user.outBuf += Server::serverMessage(ERR_NOSUCHCHANNEL, user.nick, target, "No such channel");
+			return;
+		}
+		bool userInChannel = false;
+		for (std::vector<User*>::iterator it = channel->users.begin(); it != channel->users.end(); ++it) {
+			if (*it == &user) {
+				userInChannel = true;
+				break;
+			}
+		}
+		if (!userInChannel) {
+			user.outBuf += Server::serverMessage(ERR_NOTONCHANNEL, user.nick, target, "You're not on that channel");
+			return;
+		}
+		std::string privmsgMessage = ":" + user.nick + " PRIVMSG " + target + " :" + message + "\r\n";
+		channelManager.notifyChannel(target, privmsgMessage, &user);
+	} else {
+		std::map<int, User> &users2 = server.getUsers();
+		User* targetUser = Tools::findUserByNick(target, users2);
+		if (targetUser == NULL) {
+			user.outBuf += Server::serverMessage(ERR_NOSUCHNICK, user.nick, target, "No such nick/channel");
+			return;
+		}
+		targetUser->outBuf += ":" + user.nick + " PRIVMSG " + target + " :" + message + "\r\n";
 	}
-	targetUser->outBuf += ":" + user.nick + " PRIVMSG " + command.args[0] + " :" + command.args[1] + "\r\n";
 	user.lastActivityMs = Tools::nowMs();
 }
 
@@ -172,14 +197,33 @@ void Executer::_executeJoin(Command& command, User &user, Server &server) {
 			return;
 		}
 	}
-	ChannelsManager channelManager = server.getChannelsManager();
+	ChannelsManager& channelManager = server.getChannelsManager();
 	Channel* channel = channelManager.getChannel(channelName);
 	if (channel == NULL) {
 		channelManager.addChannel(channelName, password);
 		channel = channelManager.getChannel(channelName);
 	}
+	JoinResult joinResult = channelManager.canJoin(channelName, &user, password);
+	switch (joinResult) {
+		case JOIN_SUCCESS:
+			break;
+		case JOIN_BANNED:
+			user.outBuf += Server::serverMessage(ERR_BANNEDFROMCHAN, user.nick, channelName, "Cannot join channel (+b)");
+			return;
+		case JOIN_INVITE_ONLY:
+			user.outBuf += Server::serverMessage(ERR_INVITEONLYCHAN, user.nick, channelName, "Cannot join channel (+i)");
+			return;
+		case JOIN_BAD_PASSWORD:
+			user.outBuf += Server::serverMessage(ERR_BADCHANNELKEY, user.nick, channelName, "Cannot join channel (+k)");
+			return;
+		case JOIN_CHANNEL_FULL:
+			user.outBuf += Server::serverMessage(ERR_CHANNELISFULL, user.nick, channelName, "Cannot join channel (+l)");
+			return;
+	}
 	channelManager.addUserToChannel(channelName, &user);
-
+	channelManager.sendJoinNotification(channelName, &user);
+	channelManager.sendTopicInfo(channelName, &user);
+	channelManager.sendNamesList(channelName, &user);
 }
 
 void Executer::_executeKick(Command& command, User &user) {

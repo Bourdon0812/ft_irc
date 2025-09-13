@@ -48,6 +48,15 @@ enum CommandType {
     UNKNOWN
 };
 
+// enum used to identify why a user cannot join a channel
+enum JoinResult {
+    JOIN_SUCCESS,
+    JOIN_BANNED,
+    JOIN_INVITE_ONLY,
+    JOIN_BAD_PASSWORD,
+    JOIN_CHANNEL_FULL
+};
+
 // struct used to store the command and its arguments
 struct Command {
 	std::string originalInput;

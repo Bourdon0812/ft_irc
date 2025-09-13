@@ -1,4 +1,5 @@
 #include "components/ChannelsManager.hpp"
+#include "components/Server.hpp"
 
 ChannelsManager::ChannelsManager() : _channels() {}
 
@@ -168,23 +169,71 @@ bool ChannelsManager::isBanned(const std::string &channelName, const std::string
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool ChannelsManager::canJoin(const std::string &channelName, User *user, const std::string &password) {
+JoinResult ChannelsManager::canJoin(const std::string &channelName, User *user, const std::string &password) {
     Channel* channel = getChannel(channelName);
-    if (!channel) return true;
+    if (!channel) return JOIN_SUCCESS;
     
-    if (isBanned(channelName, user->nick)) return false;
+    if (isBanned(channelName, user->nick)) return JOIN_BANNED;
     
     if (hasMode(channelName, 'i') && !isInvited(channelName, user->nick)) {
-        return false;
+        return JOIN_INVITE_ONLY;
     }
     
     if (hasMode(channelName, 'k') && channel->password != password) {
-        return false;
+        return JOIN_BAD_PASSWORD;
     }
     
-    if (hasMode(channelName, 'l') && channel->users.size() >= channel->userLimit) {
-        return false;
+    if (hasMode(channelName, 'l') && static_cast<int>(channel->users.size()) >= channel->userLimit) {
+        return JOIN_CHANNEL_FULL;
     }
     
-    return true;
+    return JOIN_SUCCESS;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ChannelsManager::notifyChannel(const std::string &channelName, const std::string &message, User *excludeUser) {
+    std::map<std::string, Channel>::iterator it = this->_channels.find(channelName);
+    if (it == this->_channels.end()) return;
+    
+    for (std::vector<User*>::iterator userIt = it->second.users.begin(); userIt != it->second.users.end(); ++userIt) {
+        if (*userIt != excludeUser) {
+            (*userIt)->outBuf += message;
+        }
+    }
+}
+
+void ChannelsManager::sendJoinNotification(const std::string &channelName, User *user) {
+    std::string joinMessage = ":" + user->nick + "!" + user->username + "@" + user->hostname + " JOIN :" + channelName + "\r\n";
+    notifyChannel(channelName, joinMessage, user);
+}
+
+void ChannelsManager::sendTopicInfo(const std::string &channelName, User *user) {
+    std::map<std::string, Channel>::iterator it = this->_channels.find(channelName);
+    if (it == this->_channels.end()) return;
+    
+    if (it->second.topic.empty()) {
+        user->outBuf += Server::serverMessage(RPL_NOTOPIC, user->nick, channelName, "No topic is set");
+    } else {
+        user->outBuf += Server::serverMessage(RPL_TOPIC, user->nick, channelName, it->second.topic);
+    }
+}
+
+void ChannelsManager::sendNamesList(const std::string &channelName, User *user) {
+    std::map<std::string, Channel>::iterator it = this->_channels.find(channelName);
+    if (it == this->_channels.end()) return;
+    
+    std::string namesList = "";
+    for (std::vector<User*>::iterator userIt = it->second.users.begin(); userIt != it->second.users.end(); ++userIt) {
+        if (!namesList.empty()) namesList += " ";
+        
+        // Ajouter @ pour les opérateurs
+        if (isOperator(channelName, *userIt)) {
+            namesList += "@";
+        }
+        namesList += (*userIt)->nick;
+    }
+    
+    user->outBuf += Server::serverMessage(RPL_NAMREPLY, user->nick, channelName, namesList);
+    user->outBuf += Server::serverMessage(RPL_ENDOFNAMES, user->nick, channelName, "End of /NAMES list");
 }
