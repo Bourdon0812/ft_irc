@@ -39,13 +39,13 @@ void Executer::execute(Command& command, User &user, Server &server) {
 			_executeKick(command, user, server);
 			break;
 		case INVITE:
-			_executeInvite(command, user);
+			_executeInvite(command, user); //todo
 			break;
 		case TOPIC:
-			_executeTopic(command, user);
+			_executeTopic(command, user); //todo
 			break;
 		case MODE:
-			_executeMode(command, user);
+			_executeMode(command, user); //todo
 			break;
 		case PING:
 			_executePing(command, user);
