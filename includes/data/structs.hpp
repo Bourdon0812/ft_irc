@@ -40,12 +40,10 @@ struct Channel {
 };
 
 // enum used to identify the type of command
-enum CommandType {
-    PASS, NICK, USER,
-    JOIN, PRIVMSG,
-    KICK, INVITE, TOPIC, MODE,
-    PING, PONG,
-    UNKNOWN
+enum CommandType
+{
+    PASS, NICK, USER, JOIN, PRIVMSG, KICK, 
+    INVITE, TOPIC, MODE, PING, PONG, UNKNOWN
 };
 
 // enum used to identify why a user cannot join a channel
@@ -58,9 +56,11 @@ enum JoinResult {
 };
 
 // struct used to store the command and its arguments
-struct Command {
-	std::string originalInput;
-	CommandType type;
+struct Command
+{
+    std::string originalInput;
+    std::string prefix;
+    CommandType type;
 	std::vector<std::string> args;
 	Command() : type(UNKNOWN), args() {}
 };

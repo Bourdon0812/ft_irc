@@ -36,7 +36,7 @@ void Executer::execute(Command& command, User &user, Server &server) {
 			_executePrivmsg(command, user, server);
 			break;
 		case KICK:
-			_executeKick(command, user);
+			_executeKick(command, user, server);
 			break;
 		case INVITE:
 			_executeInvite(command, user);
@@ -222,14 +222,55 @@ void Executer::_executeJoin(Command& command, User &user, Server &server) {
 	}
 	channelManager.addUserToChannel(channelName, &user);
 	channelManager.sendJoinNotification(channelName, &user);
-	channelManager.sendTopicInfo(channelName, &user);
-	channelManager.sendNamesList(channelName, &user);
 }
 
-void Executer::_executeKick(Command& command, User &user) {
+void Executer::_executeKick(Command& command, User &user, Server &server)
+{
 	if (!_requireRegistered(user, "KICK")) return;
-	(void)command;
-	std::cout << "Executing KICK command" << std::endl;
+
+	if (command.args.size() < 2) {
+		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "KICK", "Not enough parameters");
+		return;
+	}
+
+	const std::string &channelName = command.args[0];
+	const std::string &targetNick = command.args[1];
+	std::string reason = (command.args.size() > 2 && !command.args[2].empty()) ? command.args[2] : user.nick;
+
+	ChannelsManager &channelManager = server.getChannelsManager();
+	Channel *channel = channelManager.getChannel(channelName);
+	if (!channel) {
+		user.outBuf += Server::serverMessage(ERR_NOSUCHCHANNEL, user.nick, channelName, "No such channel");
+		return;
+	}
+
+	if (!channelManager.isOperator(channelName, &user)) {
+		user.outBuf += Server::serverMessage(ERR_CHANOPRIVSNEEDED, user.nick, channelName, "You're not channel operator");
+		return;
+	}
+
+	std::map<int, User> &users = server.getUsers();
+	User *targetUser = Tools::findUserByNick(targetNick, users);
+	if (!targetUser) {
+		user.outBuf += Server::serverMessage(ERR_NOSUCHNICK, user.nick, targetNick, "No such nick/channel");
+		return;
+	}
+
+	if (std::find(channel->users.begin(), channel->users.end(), targetUser) == channel->users.end()) {
+		user.outBuf += Server::serverMessage(ERR_USERNOTINCHANNEL, user.nick, targetNick + " " + channelName, "They aren't on that channel");
+		return;
+	}
+
+	// Message de kick à tous les utilisateurs du canal
+	std::string kickMsg = ":" + user.nick + " KICK " + channelName + " " + targetNick + " :" + reason + "\r\n";
+	channelManager.notifyChannel(channelName, kickMsg, NULL);
+
+	// Retrait de l'utilisateur du canal après notification
+	channelManager.removeUserFromChannel(channelName, targetUser);
+
+	// Supprime le canal si vide
+	if (channel->users.empty())
+		channelManager.removeChannel(channelName);
 }
 
 void Executer::_executeInvite(Command& command, User &user) {

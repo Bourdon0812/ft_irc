@@ -1,14 +1,25 @@
-#ifndef PARSER_HPP
-#define PARSER_HPP
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Parser.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ilbonnev <ilbonnev@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/11 13:56:15 by ilbonnev          #+#    #+#             */
+/*   Updated: 2025/09/11 14:57:08 by ilbonnev         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-#include "irc.hpp"
+#ifndef PARSER_HPP
+# define PARSER_HPP
+
+# include "irc.hpp"
 
 // class used to parse the input buffer
-class Parser {
-
-// je l'ai mis en place histoire de commencer
-public:
-	static Command parse(std::string inBuf);
+class Parser 
+{
+	public:
+		static Command	parse(const std::string& input);
 };
 
 #endif

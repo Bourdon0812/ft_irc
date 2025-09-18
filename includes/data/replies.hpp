@@ -41,6 +41,7 @@
 #define ERR_INVITEONLYCHAN          473  // "<channel> :Cannot join channel (+i)"
 #define ERR_BADCHANNELKEY           475  // "<channel> :Cannot join channel (+k)"
 #define ERR_BANNEDFROMCHAN          474  // "<channel> :Cannot join channel (+b)"
+#define ERR_CHANOPRIVSNEEDED		482  // 
 
 #define PING_TIMEOUTMS             60000// ":No response from client"
 #endif
