@@ -1,6 +1,7 @@
 #ifndef IRC_HPP
 #define IRC_HPP
 
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <cstdlib>
