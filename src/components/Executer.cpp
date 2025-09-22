@@ -35,6 +35,15 @@ void Executer::execute(Command& command, User &user, Server &server) {
 		case PRIVMSG:
 			_executePrivmsg(command, user, server);
 			break;
+		case NAMES:
+			_executeName(command, user, server);
+			break;
+		case PART:
+			_executePart(command, user, server);
+			break;
+		case QUIT:
+			_executeQuit(command, user, server);
+			break;
 		case KICK:
 			_executeKick(command, user, server);
 			break;
@@ -222,6 +231,8 @@ void Executer::_executeJoin(Command& command, User &user, Server &server) {
 	}
 	channelManager.addUserToChannel(channelName, &user);
 	channelManager.sendJoinNotification(channelName, &user);
+	channelManager.sendTopicInfo(channelName, &user);
+	channelManager.sendNamesList(channelName, &user);
 }
 
 void Executer::_executeKick(Command& command, User &user, Server &server)
@@ -263,6 +274,42 @@ void Executer::_executeKick(Command& command, User &user, Server &server)
 	channelManager.removeUserFromChannel(channelName, targetUser);
 	if (channel->users.empty())
 		channelManager.removeChannel(channelName);
+}
+
+void Executer::_executeName(Command& command, User &user, Server &server) {
+	if (!_requireRegistered(user, "NAMES")) return;
+	std::cout << "Executing NAMES command" << std::endl;
+	if (command.args.size() < 1) {
+		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "NAMES", "Not enough parameters");
+		return;
+	}
+	const std::string &channelName = command.args[0];
+	if (channelName.empty() || channelName[0] != '#') {
+		user.outBuf += Server::serverMessage(ERR_NOSUCHCHANNEL, user.nick, "NAMES", "No such channel");
+		return;
+	}
+	ChannelsManager& channelManager = server.getChannelsManager();
+	Channel* channel = channelManager.getChannel(channelName);
+	if (channel == NULL) {
+		user.outBuf += Server::serverMessage(RPL_ENDOFNAMES, user.nick, channelName, "End of NAMES list");
+		return;
+	}
+	channelManager.sendNamesList(channelName, &user);
+	user.outBuf += Server::serverMessage(RPL_ENDOFNAMES, user.nick, channelName, "End of NAMES list");
+}
+
+void Executer::_executePart(Command& command, User &user, Server &server) {
+	(void)command;
+	(void)user;
+	(void)server;
+	std::cout << "Executing PART command" << std::endl;
+}
+
+void Executer::_executeQuit(Command& command, User &user, Server &server) {
+	(void)command;
+	(void)user;
+	(void)server;
+	std::cout << "Executing QUIT command" << std::endl;
 }
 
 void Executer::_executeInvite(Command& command, User &user) {

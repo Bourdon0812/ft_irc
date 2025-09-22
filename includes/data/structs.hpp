@@ -42,7 +42,7 @@ struct Channel {
 // enum used to identify the type of command
 enum CommandType
 {
-    PASS, NICK, USER, JOIN, PRIVMSG, KICK, 
+    PASS, NICK, USER, JOIN, PRIVMSG, KICK, NAMES, PART, QUIT,
     INVITE, TOPIC, MODE, PING, PONG, UNKNOWN
 };
 

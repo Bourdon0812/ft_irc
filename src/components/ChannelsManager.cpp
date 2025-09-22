@@ -226,8 +226,6 @@ void ChannelsManager::sendNamesList(const std::string &channelName, User *user) 
     std::string namesList = "";
     for (std::vector<User*>::iterator userIt = it->second.users.begin(); userIt != it->second.users.end(); ++userIt) {
         if (!namesList.empty()) namesList += " ";
-        
-        // Ajouter @ pour les opérateurs
         if (isOperator(channelName, *userIt)) {
             namesList += "@";
         }
