@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Executer.cpp                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ilbonnev <ilbonnev@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/24 13:28:30 by ilbonnev          #+#    #+#             */
+/*   Updated: 2025/09/24 14:03:07 by ilbonnev         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "components/Executer.hpp"
 #include "components/Server.hpp"
 #include <cctype>
@@ -48,13 +60,13 @@ void Executer::execute(Command& command, User &user, Server &server) {
 			_executeKick(command, user, server);
 			break;
 		case INVITE:
-			_executeInvite(command, user); //todo
+			_executeInvite(command, user, server);
 			break;
 		case TOPIC:
-			_executeTopic(command, user); //todo
+			_executeTopic(command, user, server);
 			break;
 		case MODE:
-			_executeMode(command, user); //todo
+			_executeMode(command, user, server);
 			break;
 		case PING:
 			_executePing(command, user);
@@ -235,43 +247,45 @@ void Executer::_executeJoin(Command& command, User &user, Server &server) {
 	channelManager.sendNamesList(channelName, &user);
 }
 
-void Executer::_executeKick(Command& command, User &user, Server &server)
+void	Executer::_executeKick(Command& command, User &user, Server &server)
 {
-	if (!_requireRegistered(user, "KICK")) return;
+	if (!_requireRegistered(user, "KICK"))
+		return ;
 
-	if (command.args.size() < 2) {
+	if (command.args.size() < 2)
+	{
 		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "KICK", "Not enough parameters");
-		return;
+		return ;
 	}
-
-	const std::string &channelName = command.args[0];
-	const std::string &targetNick = command.args[1];
-	std::string reason = (command.args.size() > 2 && !command.args[2].empty()) ? command.args[2] : user.nick;
-
-	ChannelsManager &channelManager = server.getChannelsManager();
-	Channel *channel = channelManager.getChannel(channelName);
-	if (!channel) {
+	const std::string	&channelName = command.args[0];
+	const std::string	&targetNick = command.args[1];
+	std::string			reason = (command.args.size() > 2 && !command.args[2].empty()) ? command.args[2] : user.nick;
+	ChannelsManager		&channelManager = server.getChannelsManager();
+	Channel				*channel = channelManager.getChannel(channelName);
+	if (!channel)
+	{
 		user.outBuf += Server::serverMessage(ERR_NOSUCHCHANNEL, user.nick, channelName, "No such channel");
-		return;
+		return ;
 	}
 
 	if (!channelManager.isOperator(channelName, &user)) {
 		user.outBuf += Server::serverMessage(ERR_CHANOPRIVSNEEDED, user.nick, channelName, "You're not channel operator");
-		return;
+		return ;
 	}
 
-	std::map<int, User> &users = server.getUsers();
-	User *targetUser = Tools::findUserByNick(targetNick, users);
-	if (!targetUser) {
+	std::map<int, User>	&users = server.getUsers();
+	User				*targetUser = Tools::findUserByNick(targetNick, users);
+	if (!targetUser)
+	{
 		user.outBuf += Server::serverMessage(ERR_NOSUCHNICK, user.nick, targetNick, "No such nick/channel");
-		return;
+		return ;
 	}
-
-	if (std::find(channel->users.begin(), channel->users.end(), targetUser) == channel->users.end()) {
+	if (std::find(channel->users.begin(), channel->users.end(), targetUser) == channel->users.end())
+	{
 		user.outBuf += Server::serverMessage(ERR_USERNOTINCHANNEL, user.nick, targetNick + " " + channelName, "They aren't on that channel");
 		return;
 	}
-	std::string kickMsg = ":" + user.nick + " KICK " + channelName + " " + targetNick + " :" + reason + "\r\n";
+	std::string			kickMsg = ":" + user.nick + " KICK " + channelName + " " + targetNick + " :" + reason + "\r\n";
 	channelManager.notifyChannel(channelName, kickMsg, NULL);
 	channelManager.removeUserFromChannel(channelName, targetUser);
 	if (channel->users.empty())
@@ -314,22 +328,261 @@ void Executer::_executeQuit(Command& command, User &user, Server &server) {
 	std::cout << "Executing QUIT command" << std::endl;
 }
 
-void Executer::_executeInvite(Command& command, User &user) {
-	if (!_requireRegistered(user, "INVITE")) return;
-	(void)command;
-	std::cout << "Executing INVITE command" << std::endl;
+void	Executer::_executeInvite(Command& command, User &user, Server &server)
+{
+	if (!_requireRegistered(user, "INVITE"))
+		return ;
+	std::cout << "Executing INVITE command\n";
+	if (command.args.size() < 2)
+	{
+		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "INVITE", "Not enough parameters");
+		return ;
+	}
+	const std::string	&targetNick = command.args[0];
+	const std::string	&channelName = command.args[1];
+	ChannelsManager		&channelManager = server.getChannelsManager();
+	Channel				*channel = channelManager.getChannel(channelName);
+	if (!channel)
+	{
+		user.outBuf += Server::serverMessage(ERR_NOSUCHCHANNEL, user.nick, channelName, "No such channel");
+		return ;
+	}
+	if (!channelManager.isOperator(channelName, &user))
+	{
+		user.outBuf += Server::serverMessage(ERR_CHANOPRIVSNEEDED, user.nick, channelName, "You're not channel operator");
+		return ;
+	}
+	std::map<int, User>	&users = server.getUsers();
+	User				*targetUser = Tools::findUserByNick(targetNick, users);
+	if (!targetUser)
+	{
+		user.outBuf += Server::serverMessage(ERR_NOSUCHNICK, user.nick, targetNick, "No such nick/channel");
+		return ;
+	}
+	bool				targetInChannel = false;
+	for (std::vector<User*>::iterator it = channel->users.begin(); it != channel->users.end(); ++it)
+	{
+		if (*it == targetUser)
+		{
+			targetInChannel = true;
+			break ;
+		}
+	}
+	if (targetInChannel)
+	{
+		user.outBuf += Server::serverMessage(ERR_USERONCHANNEL, user.nick, targetNick + " " + channelName, "is already on channel");
+		return ;
+	}
+	channelManager.addInvite(channelName, targetNick);
+	std::string			inviteMsg = ":" + user.nick + "!" + user.username + "@" + user.hostname + " INVITE " + targetNick + " :" + channelName + "\r\n";
+	targetUser->outBuf += inviteMsg;
+	user.lastActivityMs = Tools::nowMs();
 }
 
-void Executer::_executeTopic(Command& command, User &user) {
-	if (!_requireRegistered(user, "TOPIC")) return;
-	(void)command;
-	std::cout << "Executing TOPIC command" << std::endl;
+void	Executer::_executeTopic(Command& command, User &user, Server &server)
+{
+	if (!_requireRegistered(user, "TOPIC"))
+		return;
+	std::cout << "Executing TOPIC command\n";
+	if (command.args.size() < 1)
+	{
+		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "TOPIC", "Not enough parameters");
+		return ;
+	}
+	const std::string	&channelName = command.args[0];
+	ChannelsManager		&channelManager = server.getChannelsManager();
+	Channel				*channel = channelManager.getChannel(channelName);
+	if (!channel)
+	{
+		user.outBuf += Server::serverMessage(ERR_NOSUCHCHANNEL, user.nick, channelName, "No such channel");
+		return;
+	}
+	bool				userInChannel = false;
+	for (std::vector<User*>::iterator it = channel->users.begin(); it != channel->users.end(); ++it)
+	{
+		if (*it == &user)
+		{
+			userInChannel = true;
+			break ;
+		}
+	}
+	if (!userInChannel)
+	{
+		user.outBuf += Server::serverMessage(ERR_NOTONCHANNEL, user.nick, channelName, "You're not on that channel");
+		return ;
+	}
+	if (command.args.size() == 1)
+	{
+		if (channel->topic.empty())
+			user.outBuf += Server::serverMessage(RPL_NOTOPIC, user.nick, channelName, "No topic is set");
+		else
+			user.outBuf += Server::serverMessage(RPL_TOPIC, user.nick, channelName, channel->topic);
+		return ;
+	}
+	std::string			newTopic = command.args[1];
+	if (channel->modes.find('t') != std::string::npos && !channelManager.isOperator(channelName, &user)) 
+	{
+		user.outBuf += Server::serverMessage(ERR_CHANOPRIVSNEEDED, user.nick, channelName, "You're not channel operator");
+		return;
+	}
+	channel->topic = newTopic;
+	std::string			topicMsg = ":" + user.nick + "!" + user.username + "@" + user.hostname +
+						   " TOPIC " + channelName + " :" + newTopic + "\r\n";
+	for (std::vector<User*>::iterator it = channel->users.begin(); it != channel->users.end(); ++it)
+		(*it)->outBuf += topicMsg;
+	user.lastActivityMs = Tools::nowMs();
 }
 
-void Executer::_executeMode(Command& command, User &user) {
-	if (!_requireRegistered(user, "MODE")) return;
-	(void)command;
-	std::cout << "Executing MODE command" << std::endl;
+void Executer::_executeMode(Command& command, User &user, Server &server)
+{
+	if (!_requireRegistered(user, "MODE"))
+		return ;
+	std::cout << "Executing MODE command\n";
+	if (command.args.size() < 1)
+	{
+		user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "MODE", "Not enough parameters");
+		return ;
+	}
+	const std::string	&channelName = command.args[0];
+	ChannelsManager		&channelManager = server.getChannelsManager();
+	Channel				*channel = channelManager.getChannel(channelName);
+	if (!channel)
+	{
+		user.outBuf += Server::serverMessage(ERR_NOSUCHCHANNEL, user.nick, channelName, "No such channel");
+		return ;
+	}
+	if (command.args.size() == 1)
+	{
+		std::string modes = "+" + channel->modes;
+		user.outBuf += Server::serverMessage(RPL_CHANNELMODEIS, user.nick, channelName, modes);
+		return ;
+	}
+	if (!channelManager.isOperator(channelName, &user))
+	{
+		user.outBuf += Server::serverMessage(ERR_CHANOPRIVSNEEDED, user.nick, channelName, "You're not channel operator");
+		return ;
+	}
+	bool				adding = true;
+	size_t				argIndex = 2;
+	std::string			modesStr = command.args[1];
+	std::string			appliedModes;
+	for (size_t i = 0; i < modesStr.size(); ++i)
+	{
+		char			mode = modesStr[i];
+		if (mode == '+')
+		{
+			adding = true;
+			continue ;
+		}
+		if (mode == '-')
+		{
+			adding = false;
+			continue ;
+		}
+		switch (mode)
+		{
+			case 'i':
+			{
+				if (adding && channel->modes.find('i') == std::string::npos)
+					channel->modes += "i";
+				else if (!adding)
+					channel->modes.erase(std::remove(channel->modes.begin(), channel->modes.end(), 'i'), channel->modes.end());
+				appliedModes += (adding ? "+i " : "-i ");
+				break ;
+			}
+			case 't':
+			{
+				if (adding && channel->modes.find('t') == std::string::npos)
+					channel->modes += "t";
+				else if (!adding)
+					channel->modes.erase(std::remove(channel->modes.begin(), channel->modes.end(), 't'), channel->modes.end());
+				appliedModes += (adding ? "+t " : "-t ");
+				break ;
+			}
+			case 'k':
+			{
+				if (adding)
+				{
+					if (argIndex >= command.args.size())
+					{
+						user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "MODE", "Not enough parameters");
+						return ;
+					}
+					channel->password = command.args[argIndex++];
+					if (channel->modes.find('k') == std::string::npos)
+						channel->modes += "k";
+					appliedModes += "+k ";
+				}
+				else
+				{
+					channel->password.clear();
+					channel->modes.erase(std::remove(channel->modes.begin(), channel->modes.end(), 'k'), channel->modes.end());
+					appliedModes += "-k ";
+				}
+				break ;
+			}
+			case 'o':
+			{
+				if (argIndex >= command.args.size())
+				{
+					user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "MODE", "Not enough parameters");
+					return ;
+				}
+				const std::string	&targetNick = command.args[argIndex++];
+				std::map<int, User>	&users = server.getUsers();
+				User				*target = Tools::findUserByNick(targetNick, users);
+				if (!target)
+				{
+					user.outBuf += Server::serverMessage(ERR_NOSUCHNICK, user.nick, targetNick, "No such nick/channel");
+					return ;
+				}
+				if (adding)
+				{
+					channelManager.addOperator(channelName, target);
+					appliedModes += "+o " + targetNick + " ";
+				}
+				else
+				{
+					channelManager.removeOperator(channelName, target);
+					appliedModes += "-o " + targetNick + " ";
+				}
+				break ;
+			}
+			case 'l':
+			{
+				if (adding)
+				{
+					if (argIndex >= command.args.size())
+					{
+						user.outBuf += Server::serverMessage(ERR_NEEDMOREPARAMS, user.nick, "MODE", "Not enough parameters");
+						return ;
+					}
+					channel->userLimit = std::atoi(command.args[argIndex++].c_str());
+					if (channel->modes.find('l') == std::string::npos)
+						channel->modes += "l";
+					appliedModes += "+l ";
+				}
+				else
+				{
+					channel->userLimit = 0;
+					channel->modes.erase(std::remove(channel->modes.begin(), channel->modes.end(), 'l'), channel->modes.end());
+					appliedModes += "-l ";
+				}
+				break ;
+			}
+			default :
+				user.outBuf += Server::serverMessage(ERR_UNKNOWNCOMMAND, user.nick, std::string(1, mode), "is unknown mode char to me");
+				break ;
+		}
+	}
+	if (!appliedModes.empty())
+	{
+		std::string msg = ":" + user.nick + "!" + user.username + "@" + user.hostname +
+						  " MODE " + channelName + " " + appliedModes + "\r\n";
+		for (std::vector<User*>::iterator it = channel->users.begin(); it != channel->users.end(); ++it)
+			(*it)->outBuf += msg;
+	}
+	user.lastActivityMs = Tools::nowMs();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

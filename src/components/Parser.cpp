@@ -6,43 +6,11 @@
 /*   By: ilbonnev <ilbonnev@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/11 13:54:09 by ilbonnev          #+#    #+#             */
-/*   Updated: 2025/09/16 11:20:39 by ilbonnev         ###   ########.fr       */
+/*   Updated: 2025/09/24 14:04:47 by ilbonnev         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "irc.hpp"
-
-/*
-// A créer (version chatgpt temporaire pour avancer sur le reste)
-Command	Parser::parse(std::string inBuf)
-{
-	std::cout << "Parsing input buffer: " << inBuf << std::endl;
-	Command cmd;
-	cmd.originalInput = inBuf;
-
-	// déterminer la commande (1er mot)
-	std::istringstream iss(inBuf);
-	std::string word;
-	if (!(iss >> word)) {
-		cmd.type = UNKNOWN;
-		return cmd;
-	}
-	cmd.type = Tools::cmdFromString(word);
-
-	// args: tous les mots suivants, avec support d'un trailing param commençant par ':'
-	while (iss >> word) {
-		if (!word.empty() && word[0] == ':') {
-			std::string rest;
-			std::getline(iss, rest);
-			if (!rest.empty() && rest[0] == ' ') rest.erase(0, 1);
-			cmd.args.push_back(word.substr(1) + (rest.empty() ? std::string("") : std::string(" ") + rest));
-			break;
-		}
-		cmd.args.push_back(word);
-	}
-	return cmd;
-}
-*/
 
 Command	Parser::parse(const std::string& input)
 {

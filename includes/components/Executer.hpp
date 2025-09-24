@@ -18,9 +18,9 @@ private:
 	static void _executeJoin(Command& command, User &user, Server &server);
 	static void _executePrivmsg(Command& command, User &user, Server &server);
 	static void _executeKick(Command& command, User &user, Server &server);
-	static void _executeInvite(Command& command, User &user);
-	static void _executeTopic(Command& command, User &user);
-	static void _executeMode(Command& command, User &user);
+	static void	_executeInvite(Command& command, User &user, Server &server);
+	static void _executeTopic(Command& command, User &user, Server &server);
+	static void _executeMode(Command& command, User &user, Server &server);
 	static void _executePing(Command& command, User &user);
 	static void _executePong(Command& command, User &user);
 	static void _executeQuit(Command& command, User &user, Server &server);

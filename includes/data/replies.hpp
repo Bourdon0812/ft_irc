@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   replies.hpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ilbonnev <ilbonnev@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/24 13:26:14 by ilbonnev          #+#    #+#             */
+/*   Updated: 2025/09/24 13:51:04 by ilbonnev         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef REPLIES_HPP
 #define REPLIES_HPP
 
@@ -9,6 +21,7 @@
 
 // Channel info
 #define RPL_JOIN                    0    // ":<nick>!<user>@<host> JOIN :<channel>"
+#define RPL_CHANNELMODEIS			324
 #define RPL_TOPIC                   332  // "<channel> :<topic>"
 #define RPL_NOTOPIC                 331  // "<channel> :No topic is set"
 #define RPL_NAMREPLY                353  // "<channel> :<nick> <nick> ..."

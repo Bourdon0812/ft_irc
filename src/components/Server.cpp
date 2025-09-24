@@ -35,8 +35,8 @@ void Server::_setSocket() {
 	}
 
 	int yes = 1;
-    if (setsockopt(this->_serverFd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
-        throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");
+	if (setsockopt(this->_serverFd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
+		throw std::runtime_error("setsockopt(SO_REUSEADDR) failed");
 	
 	sockaddr_in addr = sockaddr_in();
 	addr.sin_family = AF_INET;
@@ -142,26 +142,26 @@ void Server::_eventLoop() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool Server::_createLine(std::string &in, std::string &out) {
-    std::string::size_type p = in.find("\r\n");
-    if (p != std::string::npos) {
-        out.assign(in, 0, p);
-        in.erase(0, p + 2);
-        return true;
-    }
+	std::string::size_type p = in.find("\r\n");
+	if (p != std::string::npos) {
+		out.assign(in, 0, p);
+		in.erase(0, p + 2);
+		return true;
+	}
 
-    p = in.find('\n');
-    if (p != std::string::npos) {
-        out.assign(in, 0, p);
-        in.erase(0, p + 1);
-        return true;
-    }
+	p = in.find('\n');
+	if (p != std::string::npos) {
+		out.assign(in, 0, p);
+		in.erase(0, p + 1);
+		return true;
+	}
 
-    return false;
+	return false;
 }
 
 void Server::_onClientDisconnected(int fd) {
 	std::map<int, User>::iterator it = this->_users.find(fd);
-    if (it == this->_users.end()) return;
+	if (it == this->_users.end()) return;
 	std::cout << "Client disconnected (fd=" << fd << ")" << std::endl;
 	close(fd);
 	this->_users.erase(it);
@@ -181,8 +181,8 @@ void Server::_onServerReadable() {
 
 void Server::_onClientReadable(int fd) {
 	std::map<int, User>::iterator it = this->_users.find(fd);
-    if (it == this->_users.end()) return;
-    User &u = it->second;
+	if (it == this->_users.end()) return;
+	User &u = it->second;
 	
 	while (true) {
 		char buf[4096];
@@ -208,8 +208,8 @@ void Server::_onClientReadable(int fd) {
 
 void Server::_onClientWritable(int fd) {
 	std::map<int, User>::iterator it = this->_users.find(fd);
-    if (it == this->_users.end()) return;
-    User &u = it->second;
+	if (it == this->_users.end()) return;
+	User &u = it->second;
 	if (u.outBuf.empty()) return;
 	ssize_t n = send(fd, u.outBuf.data(), u.outBuf.size(), 0);
 	if (n > 0) {
